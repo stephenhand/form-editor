@@ -1,0 +1,12 @@
+{
+  "devDependencies": {
+    "karma": "~1.7.0",
+    "karma-elm-test": "file:../karma-elm-test",
+    "karma-chrome-launcher": "~2.1.1",
+    "karma-edge-launcher": "~0.4.1",
+    "gulp": "3.9.1",
+    "gulp-git": "2.4.2",
+    "gulp-modify-file": "0.1.0",
+    "gulp-elm-make": "0.7.2"
+  }
+}
