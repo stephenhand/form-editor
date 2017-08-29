@@ -3,40 +3,83 @@
  */
 const fs = require("fs");
 const gulp = require("gulp");
+const clean = require("gulp-clean");
 const git = require("gulp-git");
 const modify = require("gulp-modify-file");
+const elm = require("gulp-elm");
+const {spawn} = require("child_process");
 const gitRepo="https://github.com/stephenhand/elm-xslt.git", gitTag="1.0.0", moduleName="stephenhand/elm-xslt", version="1.0.0";
+const intermediateBuildFolder = "intermediate_build_files";
 
-gulp.task("git-elm-modules", function(cb) {
-    const elmStuffPath = `./elm-stuff/packages/${moduleName}/${version}`;
-    return gulp.src(["./elm-stuff/exact-dependencies.json"], {base: './'})
+gulp.task("restore-standard-elm-modules", (cb)=>{
+    const packageProc = spawn("elm-package", ["install"]);
+    packageProc.stdout.on("data", (data) => {
+        if (data.toString().indexOf("[Y/n]")!==-1){
+            packageProc.stdin.write("y\n");
+        }
+        console.log(`stdout: ${data}`);
+    });
+    packageProc.stderr.on("data", (data) => {
+        console.log(`stderr: ${data}`);
+    });
+    packageProc.on("close", code=>cb()) ;
+});
+
+gulp.task("clean-build-area",  ()=>gulp.src([`./${intermediateBuildFolder}`]).pipe(clean({read:false})));
+
+gulp.task("prepare-build-area", ["restore-standard-elm-modules", "clean-build-area"], ()=>gulp.src(["./elm-stuff/packages/**", "./elm-stuff/exact-dependencies.json", "./elm-package.json", "./src/**/*.elm"], {base: "./"}).pipe(gulp.dest(`./${intermediateBuildFolder}`)));
+
+gulp.task("fix-project-deps", ["prepare-build-area"], ()=> {
+    const elmStuffPath = `./${intermediateBuildFolder}/elm-stuff/packages/${moduleName}/${version}`;
+    return gulp.src([`./${intermediateBuildFolder}/elm-stuff/exact-dependencies.json`,`./${intermediateBuildFolder}/elm-package.json`], {base: `./${intermediateBuildFolder}`})
     //update exact-dependencies.json
-        .pipe(modify(function(exactDepsJson){
-            let deps=JSON.parse(exactDepsJson);
-            console.log("updating exact-dependencies.json");
-            deps[moduleName] = version;
-            console.log(`exact-dependencies.json: ${JSON.stringify(deps)}`);
-            return JSON.stringify(deps, null, 2);
+        .pipe(modify((exactDepsJson, path)=>{
+            let parsed=JSON.parse(exactDepsJson);
+            console.log(`updating ${path}`);
+
+            if (path.endsWith("exact-dependencies.json")){
+                parsed[moduleName] = version;
+            }
+            else if (path.endsWith("elm-package.json")) {
+                parsed.dependencies = parsed.dependencies || {};
+                let [major, minor, patch] = version.split(".");
+                parsed.dependencies[moduleName] = `${version} <= v < ${major}.${minor}.${Number(patch)+1}`;
+            }
+            console.log(`${path}: ${JSON.stringify(parsed)}`);
+            return JSON.stringify(parsed, null, 2);
         }))
-        .pipe(gulp.dest("./"))
-        .on("end", function(){
-            git.clone(gitRepo, {args: `--single-branch --depth 1 ${elmStuffPath}`}, function(err) {
-                if (err){
-                    console.log(err);
-                }
-                git.checkout(version, {cwd:elmStuffPath},function(checkoutError){
-                    if (checkoutError){
-                        console.log(checkoutError);
-                    }
-                });
-                // handle err
-            });
+        .pipe(gulp.dest(`./${intermediateBuildFolder}`))
+
+});
+gulp.task("restore-git-elm-modules", ["fix-project-deps"], (cb)=> {
+    const elmStuffPath = `./${intermediateBuildFolder}/elm-stuff/packages/${moduleName}/${version}`;
+    git.clone(gitRepo, {args: `--single-branch --depth 1 ${elmStuffPath}`}, function(err) {
+        if (err){
+            console.log(err);
+        }
+        git.checkout(version, {cwd:elmStuffPath},function(checkoutError){
+            if (checkoutError){
+                console.log(checkoutError);
+            }
+            cb();
         });
+        // handle err
+
+    });
 
 });
 
-gulp.task("make-elm-app", function(){
+gulp.task("make-elm-app",["restore-git-elm-modules"], (cb)=>{
 
+    const makeProc = spawn("elm-make", ["--yes", "--output=../elm-app.js", "src/App.elm"], {cwd:`./${intermediateBuildFolder}`});
+    makeProc.stdout.on("data", (data) => {
+        console.log(`stdout: ${data}`);
+    });
+    makeProc.stderr.on("data", (data) => {
+        console.log(`stderr: ${data}`);
+    });
+    makeProc.on("close", code=>cb()) ;
+    // return gulp.src(`./${intermediateBuildFolder}/**/*.elm`, {base: `./${intermediateBuildFolder}`})
+    //     .pipe(elm({cwd:`./${intermediateBuildFolder}`}))
+    //     .pipe(gulp.dest("./bin"));
 });
-
-

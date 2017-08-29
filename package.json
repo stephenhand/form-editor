@@ -7,6 +7,8 @@
     "gulp": "3.9.1",
     "gulp-git": "2.4.2",
     "gulp-modify-file": "0.1.0",
-    "gulp-elm-make": "0.7.2"
+    "gulp-elm": "0.7.2",
+    "gulp-clean": "0.3.2",
+    "merge-stream": "1.0.1"
   }
 }
