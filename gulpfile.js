@@ -68,18 +68,10 @@ gulp.task("restore-git-elm-modules", ["fix-project-deps"], (cb)=> {
     });
 
 });
+gulp.task("elm-init", elm.init);
 
-gulp.task("make-elm-app",["restore-git-elm-modules"], (cb)=>{
-
-    const makeProc = spawn("elm-make", ["--yes", "--output=../elm-app.js", "src/App.elm"], {cwd:`./${intermediateBuildFolder}`});
-    makeProc.stdout.on("data", (data) => {
-        console.log(`stdout: ${data}`);
-    });
-    makeProc.stderr.on("data", (data) => {
-        console.log(`stderr: ${data}`);
-    });
-    makeProc.on("close", code=>cb()) ;
-    // return gulp.src(`./${intermediateBuildFolder}/**/*.elm`, {base: `./${intermediateBuildFolder}`})
-    //     .pipe(elm({cwd:`./${intermediateBuildFolder}`}))
-    //     .pipe(gulp.dest("./bin"));
+gulp.task("make-elm-app",["restore-git-elm-modules","elm-init"], ()=>{
+    return gulp.src(`./${intermediateBuildFolder}/src/App.elm`)
+        .pipe(elm.bundle("elm-app.js",{cwd:`./${intermediateBuildFolder}`}))
+        .pipe(gulp.dest("./"));
 });
