@@ -1,14 +1,16 @@
 {
   "devDependencies": {
-    "karma": "~1.7.0",
-    "karma-elm-test": "file:../karma-elm-test",
-    "karma-chrome-launcher": "~2.1.1",
-    "karma-edge-launcher": "~0.4.1",
     "gulp": "3.9.1",
+    "gulp-clean": "0.3.2",
+    "gulp-elm": "file:../gulp-elm",
+    "gulp-elm-package": "0.0.2",
+    "gulp-elm-css": "0.1.0",
     "gulp-git": "2.4.2",
     "gulp-modify-file": "0.1.0",
-    "gulp-elm": "0.7.2",
-    "gulp-clean": "0.3.2",
+    "karma": "^1.7.1",
+    "karma-chrome-launcher": "~2.1.1",
+    "karma-edge-launcher": "^0.4.2",
+    "karma-elm-test": "file:../karma-elm-test",
     "merge-stream": "1.0.1"
   }
 }

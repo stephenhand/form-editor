@@ -1,28 +1,18 @@
 /**
  * Created by stephen.hand on 15/08/2017.
  */
-const fs = require("fs");
 const gulp = require("gulp");
 const clean = require("gulp-clean");
 const git = require("gulp-git");
 const modify = require("gulp-modify-file");
 const elm = require("gulp-elm");
-const {spawn} = require("child_process");
+const elmPackage = require("gulp-elm-package");
+const elmCss = require("gulp-elm-css");
 const gitRepo="https://github.com/stephenhand/elm-xslt.git", gitTag="1.0.0", moduleName="stephenhand/elm-xslt", version="1.0.0";
 const intermediateBuildFolder = "intermediate_build_files";
 
 gulp.task("restore-standard-elm-modules", (cb)=>{
-    const packageProc = spawn("elm-package", ["install"]);
-    packageProc.stdout.on("data", (data) => {
-        if (data.toString().indexOf("[Y/n]")!==-1){
-            packageProc.stdin.write("y\n");
-        }
-        console.log(`stdout: ${data}`);
-    });
-    packageProc.stderr.on("data", (data) => {
-        console.log(`stderr: ${data}`);
-    });
-    packageProc.on("close", code=>cb()) ;
+    elmPackage.install({}, {noprompt:true}, cb) ;
 });
 
 gulp.task("clean-build-area",  ()=>gulp.src([`./${intermediateBuildFolder}`]).pipe(clean({read:false})));
@@ -70,8 +60,16 @@ gulp.task("restore-git-elm-modules", ["fix-project-deps"], (cb)=> {
 });
 gulp.task("elm-init", elm.init);
 
+gulp.task("compile-css", () => {
+    return gulp.src("build/BuildCss.elm")
+        .pipe(elmCss({ module: "BuildCss"}))
+        .pipe(gulp.dest("css"))
+});
+
 gulp.task("make-elm-app",["restore-git-elm-modules","elm-init"], ()=>{
     return gulp.src(`./${intermediateBuildFolder}/src/App.elm`)
         .pipe(elm.bundle("elm-app.js",{cwd:`./${intermediateBuildFolder}`}))
         .pipe(gulp.dest("./"));
 });
+
+gulp.task("build", ["make-elm-app", "compile-css"]);
