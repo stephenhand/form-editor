@@ -10,7 +10,7 @@
     "karma": "^1.7.1",
     "karma-chrome-launcher": "~2.1.1",
     "karma-edge-launcher": "^0.4.2",
-    "karma-elm-test": "file:../karma-elm-test",
+    "karma-elm-test": "0.0.4",
     "merge-stream": "1.0.1"
   }
 }

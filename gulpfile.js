@@ -8,6 +8,7 @@ const modify = require("gulp-modify-file");
 const elm = require("gulp-elm");
 const elmPackage = require("gulp-elm-package");
 const elmCss = require("gulp-elm-css");
+const KarmaServer = require('karma').Server;
 const gitRepo="https://github.com/stephenhand/elm-xslt.git", gitTag="1.0.0", moduleName="stephenhand/elm-xslt", version="1.0.0";
 const intermediateBuildFolder = "intermediate_build_files";
 
@@ -73,3 +74,21 @@ gulp.task("make-elm-app",["restore-git-elm-modules","elm-init"], ()=>{
 });
 
 gulp.task("build", ["make-elm-app", "compile-css"]);
+
+gulp.task('test', ["build"], (done)=> {
+    new KarmaServer({
+        configFile: __dirname + '/karma.conf.js',
+        singleRun: true
+    }, done).start();
+});
+
+/**
+ * Watch for file changes and re-run tests on each change
+ */
+gulp.task('tdd', function (done) {
+    new KarmaServer({
+        configFile: __dirname + '/karma.conf.js'
+    }, done).start();
+});
+
+gulp.task('default', ['test']);

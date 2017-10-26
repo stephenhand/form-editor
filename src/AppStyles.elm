@@ -8,16 +8,14 @@ type CssClasses
     = TabContent |
     ActiveTabContent |
     SplitTabContent |
-    Tab
+    Tab |
+    TabStrip
 
-
-type CssIds
-    = TabStrip
 
 css =
     (stylesheet << namespace "form-editor-app")
     [
-        id TabStrip [
+        class TabStrip [
 
         ],
         class TabContent [
